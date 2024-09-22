@@ -54,7 +54,7 @@ resource "aws_instance" "web_server_back" {
     security_groups = ["${aws_security_group.security_group.name}"]
     key_name        = aws_key_pair.deployer.key_name
     tags = {
-        Name = "Back-${count.index + 1}"
+        Name = "Back-Server-${count.index + 1}"
         Environment = "demo"
         Role = "server"
     }
@@ -84,7 +84,7 @@ resource "aws_instance" "web_server_front" {
     user_data = "${file("userdata.sh")}"
     key_name = aws_key_pair.deployer.key_name
     tags = {
-        Name = "Front-${count.index + 1}"
+        Name = "Front-Server-${count.index + 1}"
     }
 }
 
