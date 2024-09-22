@@ -17,17 +17,24 @@ data "aws_subnets" "subnet_ids" {
 resource "aws_security_group" "security_group" {
     name        = "web-server"
     description = "Allow incoming HTTP Connections"
-    
+    // Enable ssh
     ingress {
         from_port   = 22
         to_port     = 22
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-
+    // Enable http
     ingress {
         from_port   = 80
         to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    // Enable react app running on port 3000
+    ingress {
+        from_port   = 3000
+        to_port     = 3000
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -59,21 +66,7 @@ resource "aws_instance" "web_server_back" {
         Role = "server"
     }
 }
-/*
-resource "null_resource" "ansible" {
-  provisioner "local-exec" {
-    command = "ansible-playbook -i inventory.yml -u ubuntu playbooks.yml"
-  }
 
-  triggers = {
-    always_run = timestamp()
-  }
-
-  depends_on = [ 
-    aws_instance.web_server_back
-   ]
-}
-*/
 // Frontend servers
 resource "aws_instance" "web_server_front" {
     ami             = "ami-04a92520784b93e73"

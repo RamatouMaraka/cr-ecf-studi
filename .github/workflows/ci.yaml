@@ -4,10 +4,15 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  CI:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
+    - name: install dependencies
+      run: npm install
+    - name: run test
+      run: npm run test
     - name: login to Dockerhub
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
