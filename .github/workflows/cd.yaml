@@ -18,7 +18,7 @@ jobs:
     - name: delete old docker container
       run: sudo docker rm -f hello-world-react || true
     - name: run docker container
-      run: sudo docker run -d -p 3000:3000 --name hello-world-react rama402/hello-world-react:latest
+      run: sudo docker run -d -p 80:3000 --name hello-world-react rama402/hello-world-react:latest
     - name: cleanup non used ressources
       run: sudo docker system prune -af
       
