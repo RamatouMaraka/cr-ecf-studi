@@ -1,0 +1,24 @@
+name: CD Pipeline
+on:
+  workflow_run:
+    workflows: [CI Pipeline]
+    types:
+        - completed
+
+jobs:
+  deploy:
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: [Front_1, Front_2]
+    
+    steps:
+    - name: pull docker image 
+      run: sudo docker pull yacinemathurin/hello-world-react:latest
+    - name: delete old docker container
+      run: sudo docker rm -f hello-world-react || true
+    - name: run docker container
+      run: sudo docker run -d -p 3000:3000 --name hello-world-react yacinemathurin/hello-world-react:latest
+    - name: cleanup non used ressources
+      run: sudo docker system prune -af
+      
