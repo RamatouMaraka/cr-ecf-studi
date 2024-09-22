@@ -1,0 +1,16 @@
+---
+plugin: amazon.aws.aws_ec2
+
+regions:
+  - eu-west-3
+
+hostnames:
+  - ip-address
+
+include-filters:
+  - tag:Environment:
+    - "demo"
+
+leading-separator: false
+keyed-groups:
+  - key: tags.Role

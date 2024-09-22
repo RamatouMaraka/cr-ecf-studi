@@ -1,9 +1,9 @@
 provider "aws" {
   profile = "default"
-  region = "eu-west-3" 
+  region = "eu-west-3"
 }
 
-data "aws_vpc" "default" { 
+data "aws_vpc" "default" {
   default = true
 } 
 
@@ -19,18 +19,19 @@ resource "aws_security_group" "security_group" {
     description = "Allow incoming HTTP Connections"
     
     ingress {
-        from_port   = 80
-        to_port     = 80 
+        from_port   = 22
+        to_port     = 22
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-     
+
     ingress {
-        from_port   = 3000
-        to_port     = 3000
+        from_port   = 80
+        to_port     = 80
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
+    
     egress {
         from_port   = 0
         to_port     = 0
@@ -39,40 +40,49 @@ resource "aws_security_group" "security_group" {
     }
 }
 
+# Creating key-pair on AWS using SSH-public key
+resource "aws_key_pair" "deployer" {
+  key_name   = var.key-name
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
 // Backend servers
 resource "aws_instance" "web_server_back" {
-    ami             = "ami-0cdfcb9783eb43c45"
+    ami             = "ami-04a92520784b93e73"
     instance_type   = "t2.micro"
     count           = 2
     security_groups = ["${aws_security_group.security_group.name}"]
-    user_data = <<-EOF
-       #!/bin/bash
-       sudo su
-        yum update -y
-        yum install httpd -y
-        systemctl start httpd
-        systemctl enable httpd
-        echo "<html><h1> Welcome to studi. this is backend virtual machine from $(hostname -f)...</p> </h1></html>" >> /var/www/html/index.html
-    EOF
+    key_name        = aws_key_pair.deployer.key_name
     tags = {
         Name = "Back-${count.index + 1}"
+        Environment = "demo"
+        Role = "server"
     }
 }
+/*
+resource "null_resource" "ansible" {
+  provisioner "local-exec" {
+    command = "ansible-playbook -i inventory.yml -u ubuntu playbooks.yml"
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [ 
+    aws_instance.web_server_back
+   ]
+}
+*/
 // Frontend servers
 resource "aws_instance" "web_server_front" {
-    ami             = "ami-0cdfcb9783eb43c45"
+    ami             = "ami-04a92520784b93e73"
     instance_type   = "t2.micro"
     count           = 2
     security_groups = ["${aws_security_group.security_group.name}"]
-    user_data = <<-EOF
-       #!/bin/bash
-       sudo su
-        yum update -y
-        yum install httpd -y
-        systemctl start httpd
-        systemctl enable httpd
-        echo "<html><h1> Welcome to studi. this is frontend virtual machine from $(hostname -f)...</p> </h1></html>" >> /var/www/html/index.html
-    EOF
+    // Script to install docker on the servers
+    user_data = "${file("userdata.sh")}"
+    key_name = aws_key_pair.deployer.key_name
     tags = {
         Name = "Front-${count.index + 1}"
     }
@@ -90,7 +100,7 @@ resource "aws_lb" "application_lb_back" {
         Name = "alb-back"
     }
 }
-//Frontend  ALB
+//Frontend ALB
 resource "aws_lb" "application_lb_front" {
     name            = "alb-front"
     internal        = false
